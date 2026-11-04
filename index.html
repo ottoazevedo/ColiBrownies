@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Coli Brownies · Gestão</title>
+<style>
+/* ── TOKENS ── (mesma estrutura do MapaTreino, paleta chocolate) */
+:root{
+  --bg:#F6F1EC; --surface:#FFFFFF; --panel:#FBF8F5; --border:#E6DCD2;
+  --navy:#3B2A20; --navy2:#4E382B; --blue:#B5651D; --blue-lt:#F8EDE3;
+  --teal:#1AA8C0; --teal-lt:#E6F7FA; --green:#18A058; --green-lt:#E6F7EE;
+  --orange:#E07820; --orange-lt:#FFF3E6; --red:#D63030; --red-lt:#FDEAEA;
+  --text:#3B2A20; --sub:#7A6556; --muted:#A8968A;
+  --radius:12px; --tab-h:58px; --top-h:56px; --shadow:0 2px 12px rgba(59,42,32,.08);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:#E9E1D9}
+body{font-family:-apple-system,'Segoe UI',sans-serif;color:var(--text);font-size:15px;line-height:1.45}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit;font-size:15px;color:var(--text);background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:9px 11px;width:100%;outline:none}
+input:focus,select:focus{border-color:var(--blue)}
+input[type=number]{-moz-appearance:textfield}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none}
+h2{font-size:1rem;font-weight:700;color:var(--navy)}
+h3{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:18px 2px 8px}
+h3:first-child{margin-top:4px}
+
+/* ── LAYOUT ── */
+#app{display:flex;flex-direction:column;height:100%;max-width:460px;margin:0 auto;background:var(--bg);position:relative;box-shadow:0 0 30px rgba(0,0,0,.08)}
+#screen-area{flex:1;overflow-y:auto;overflow-x:hidden}
+.scroll-body{padding:12px 14px 90px}
+#topbar{height:var(--top-h);display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:var(--navy);flex-shrink:0}
+.t-title{font-size:1rem;font-weight:700;color:#fff}
+.t-sub{font-size:.72rem;color:rgba(255,255,255,.55)}
+.top-btn{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,.12);color:#fff;font-size:17px}
+#tabbar{height:var(--tab-h);display:flex;background:var(--surface);border-top:1.5px solid var(--border);flex-shrink:0}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.tab.active{color:var(--blue)}
+.tab svg{width:22px;height:22px}
+
+/* ── COMPONENTS ── */
+.card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;box-shadow:var(--shadow);margin-bottom:10px}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px}
+.kpi{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:10px 12px}
+.kpi .l{font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.kpi .v{font-size:1.35rem;font-weight:800;color:var(--navy);line-height:1.2;margin-top:2px}
+.kpi .s{font-size:.72rem;color:var(--sub)}
+.row{display:flex;align-items:center;gap:10px}
+.between{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.grow{flex:1;min-width:0}
+.li{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.li:last-child{border-bottom:none}
+.li .t{font-weight:650;font-size:.92rem}
+.li .d{font-size:.76rem;color:var(--sub)}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:.68rem;font-weight:700;padding:3px 8px;border-radius:20px;white-space:nowrap}
+.ok{background:var(--green-lt);color:var(--green)} .warn{background:var(--orange-lt);color:var(--orange)}
+.bad{background:var(--red-lt);color:var(--red)} .info{background:var(--teal-lt);color:#0F7F93} .neu{background:var(--panel);color:var(--sub);border:1px solid var(--border)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-weight:700;font-size:.85rem;padding:10px 14px;border-radius:9px;background:var(--blue);color:#fff}
+.btn.ghost{background:var(--blue-lt);color:var(--blue)}
+.btn.outline{background:var(--surface);border:1.5px solid var(--border);color:var(--navy)}
+.btn.red{background:var(--red-lt);color:var(--red)}
+.btn.sm{padding:6px 10px;font-size:.75rem;border-radius:7px}
+.btn.block{width:100%}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.qa{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.qa .btn{padding:12px 8px}
+.seg{display:flex;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:3px;margin-bottom:12px}
+.seg button{flex:1;padding:7px 4px;border-radius:7px;font-size:.78rem;font-weight:700;color:var(--sub)}
+.seg button.on{background:var(--navy);color:#fff}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.chip{padding:5px 11px;border-radius:20px;font-size:.75rem;font-weight:700;background:var(--surface);border:1.5px solid var(--border);color:var(--sub)}
+.chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.empty{text-align:center;color:var(--muted);font-size:.85rem;padding:18px 8px}
+.money-pos{color:var(--green);font-weight:700} .money-neg{color:var(--red);font-weight:700}
+.note{font-size:.75rem;color:var(--sub);background:var(--panel);border:1px dashed var(--border);border-radius:8px;padding:8px 10px;margin:8px 0}
+.mockbar{background:var(--orange-lt);color:var(--orange);font-size:.72rem;font-weight:700;text-align:center;padding:5px}
+table.t{width:100%;border-collapse:collapse;font-size:.82rem}
+table.t td,table.t th{padding:6px 4px;border-bottom:1px solid var(--border);text-align:left}
+table.t th{font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+table.t .r{text-align:right}
+.dre td{padding:7px 4px}
+.dre .tot td{font-weight:800;border-top:2px solid var(--navy)}
+.dre .sub td{color:var(--sub);font-size:.78rem;padding-left:14px}
+.bars{display:flex;align-items:flex-end;gap:8px;height:120px;padding-top:8px}
+.bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end}
+.bar .pair{display:flex;gap:2px;align-items:flex-end;width:100%;justify-content:center;flex:1}
+.bar .in{width:40%;background:var(--green);border-radius:3px 3px 0 0}
+.bar .out{width:40%;background:var(--red);opacity:.75;border-radius:3px 3px 0 0}
+.bar .m{font-size:.62rem;color:var(--muted);font-weight:700}
+.legend{display:flex;gap:12px;font-size:.7rem;color:var(--sub);margin-top:6px}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+
+/* ── SHEET ── */
+.sheet-bg{position:absolute;inset:0;background:rgba(30,20,14,.45);display:none;align-items:flex-end;z-index:50}
+.sheet-bg.open{display:flex}
+.sheet{background:var(--bg);width:100%;max-height:92%;border-radius:16px 16px 0 0;display:flex;flex-direction:column}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1.5px solid var(--border)}
+.sheet-body{overflow-y:auto;padding:12px 16px 24px}
+.fld{margin-bottom:10px}
+.fld label{display:block;font-size:.7rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.line{display:grid;grid-template-columns:1fr 84px 28px;gap:6px;align-items:center;margin-bottom:6px}
+.line input,.line select{padding:7px 8px;font-size:.85rem}
+.x{color:var(--red);font-weight:800;font-size:1rem}
+.sumbox{background:var(--navy);color:#fff;border-radius:10px;padding:10px 12px;margin:10px 0}
+.sumbox .between{font-size:.85rem}
+.sumbox b{font-size:1.05rem}
+#toast{position:absolute;left:50%;bottom:76px;transform:translateX(-50%);background:var(--navy);color:#fff;font-size:.82rem;font-weight:600;padding:9px 14px;border-radius:9px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:60;white-space:nowrap}
+#toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="mockbar">MOCKUP MVP · dados de exemplo · salvo só neste navegador</div>
+  <div id="topbar">
+    <div class="row" id="top-left"><div><div class="t-title" id="t-title">Coli Brownies</div><div class="t-sub" id="t-sub"></div></div></div>
+    <div class="row"><button class="top-btn" id="btn-cfg" onclick="go('cad')" title="Cadastros">⚙</button></div>
+  </div>
+  <div id="screen-area"><div class="scroll-body" id="body"></div></div>
+  <div id="tabbar">
+    <button class="tab" data-t="home" onclick="go('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Início</button>
+    <button class="tab" data-t="prod" onclick="go('prod')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M8 6V4M16 6V4"/></svg>Produção</button>
+    <button class="tab" data-t="est" onclick="go('est')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7M12 11v10"/></svg>Estoque</button>
+    <button class="tab" data-t="loj" onclick="go('loj')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9l1-5h14l1 5M4 9v11h16V9M4 9h16M9 20v-6h6v6"/></svg>Lojas</button>
+    <button class="tab" data-t="fin" onclick="go('fin')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Financeiro</button>
+  </div>
+  <div class="sheet-bg" id="sheet" onclick="if(event.target===this)closeSheet()">
+    <div class="sheet"><div class="sheet-head"><h2 id="sh-title"></h2><button class="top-btn" style="background:var(--border);color:var(--navy)" onclick="closeSheet()">✕</button></div>
+    <div class="sheet-body" id="sh-body"></div></div>
+  </div>
+  <div id="toast"></div>
+</div>
+
+<script>
+/* ════════════ UTIL ════════════ */
+const LS='coli_mvp_v1';
+const $=s=>document.querySelector(s);
+const uid=()=>Math.random().toString(36).slice(2,9);
+function isoOf(d){const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)}
+const today=()=>isoOf(new Date());
+function addDays(iso,n){const d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+n);return isoOf(d)}
+function diff(a,b){return Math.round((new Date(a+'T12:00:00')-new Date(b+'T12:00:00'))/864e5)}
+const money=v=>(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const num=(v,d=0)=>(+v||0).toLocaleString('pt-BR',{maximumFractionDigits:d,minimumFractionDigits:d});
+const fd=iso=>iso?iso.slice(8,10)+'/'+iso.slice(5,7):'';
+const fdy=iso=>iso?fd(iso)+'/'+iso.slice(2,4):'';
+const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const monthLabel=ym=>MES[+ym.slice(5,7)-1]+'/'+ym.slice(2,4);
+function shiftMonth(ym,n){const d=new Date(ym+'-15T12:00:00');d.setMonth(d.getMonth()+n);return isoOf(d).slice(0,7)}
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2200)}
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ════════════ STATE ════════════ */
+let S;
+function save(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}}
+function load(){try{const r=localStorage.getItem(LS);if(r){S=JSON.parse(r);return}}catch(e){}S=seed();save()}
+
+const ING=id=>S.ingredients.find(i=>i.id===id);
+const REC=id=>S.recipes.find(r=>r.id===id);
+const STO=id=>S.stores.find(s=>s.id===id);
+const LOT=id=>S.lots.find(l=>l.id===id);
+const FORMS=['35x35','40x30'];
+const REV_CATS=['Consignado','Venda direta','Outras receitas'];
+const EXP_CATS=['Ingredientes','Embalagens','Gás/Energia','Transporte','Marketing','Equipamentos','Taxas/Impostos','Outras despesas'];
+const STOCK_CATS=['Ingredientes','Embalagens']; // viram estoque → entram no DRE via CMV
+
+function fmtQ(i,q){if(!i)return num(q);if(i.unit==='un')return num(q)+' un';return Math.abs(q)>=1000?num(q/1000,2)+' kg':num(q)+' g'}
+function unitCostLabel(i){return i.unit==='un'?money(i.cost)+'/un':money(i.cost*1000)+'/kg'}
+
+/* ════════════ SEED (receitas 35x35/40x30 do ebook) ════════════ */
+function seed(){
+  const T=today();
+  // [id, nome, unidade, R$/kg ou R$/un, estoque, mínimo, embalagem, tamanho emb.]
+  const I=[
+    ['farinha','Farinha de trigo tipo 1','g',5.5,8000,3000,'Pacote 5 kg',5000],
+    ['chocpo','Chocolate em pó 50%','g',38,2100,1000,'Pacote 1 kg',1000],
+    ['acucar','Açúcar refinado','g',4.8,9000,5000,'Fardo 5 kg',5000],
+    ['mascavo','Açúcar mascavo','g',12,600,500,'Pacote 1 kg',1000],
+    ['demerara','Açúcar demerara/coco','g',10,0,0,'Pacote 1 kg',1000],
+    ['oleo','Óleo de soja','g',9,2500,1500,'Garrafa 900 ml (~830 g)',830],
+    ['mantss','Manteiga sem sal','g',55,400,500,'Tablete 500 g',500],
+    ['mantcs','Manteiga com sal','g',52,0,0,'Tablete 500 g',500],
+    ['ovos','Ovos (peso sem casca)','g',18,3000,1500,'Bandeja 30 un (~1,5 kg)',1500],
+    ['leitepo','Leite em pó','g',40,300,300,'Pacote 800 g',800],
+    ['nesquik','Nesquik','g',35,0,0,'Pacote 750 g',750],
+    ['nutella','Nutella','g',75,650,650,'Pote 650 g',650],
+    ['chocleite','Chocolate ao leite (barra)','g',55,1000,500,'Barra 1 kg',1000],
+    ['chocbranco','Chocolate branco (barra)','g',55,500,0,'Barra 1 kg',1000],
+    ['chocmeio','Chocolate meio amargo (barra)','g',55,0,0,'Barra 1 kg',1000],
+    ['cream','Cream cheese','g',50,0,0,'Pote 1 kg',1000],
+    ['corante','Corante gel vermelho','g',150,50,0,'Pote 50 g',50],
+    ['baunilha','Essência de baunilha','g',60,100,0,'Frasco 100 ml',100],
+    ['sal','Sal','g',3,1000,0,'Pacote 1 kg',1000],
+    ['bicarb','Bicarbonato de sódio','g',30,200,0,'Pacote 200 g',200],
+    ['farroz','Farinha de arroz/aveia','g',14,0,0,'Pacote 1 kg',1000],
+    ['cacau','Cacau 100%','g',80,0,0,'Pacote 500 g',500],
+    ['oleococo','Óleo de coco','g',45,0,0,'Pote 500 g',500],
+    ['leitecond','Leite condensado','g',22,790,0,'Lata 395 g',395],
+    ['creme','Creme de leite','g',20,0,0,'Caixa 200 g',200],
+    ['bopp','Saco BOPP adesivado 9x9','un',0.12,400,200,'Pacote 1.000 un',1000],
+    ['cinta','Cinta personalizada','un',0.35,150,200,'Pacote 100 un',100],
+  ];
+  const ingredients=I.map(([id,name,unit,c,stock,min,packLabel,packSize])=>({id,name,unit,cost:unit==='un'?c:c/1000,stock,min,packLabel,packSize}));
+  const r=(id,name,validity,items,perUnit=[],y=25)=>({id,name,validity,yields:{'35x35':y,'40x30':y},items:items.map(([ing,qty])=>({ing,qty})),perUnit:perUnit.map(([ing,qty])=>({ing,qty}))});
+  const recipes=[
+    r('trad','Tradicional',15,[['farinha',330],['chocpo',255],['acucar',820],['oleo',360],['ovos',410]]),
+    r('nutella','Nutella',15,[['farinha',240],['chocpo',180],['acucar',585],['oleo',260],['ovos',295]],[['nutella',22.5]]),
+    r('brookie','Brookie',15,[['farinha',470],['acucar',615],['mascavo',135],['chocpo',140],['oleo',210],['mantss',165],['ovos',320],['chocleite',85],['baunilha',16],['sal',3.5],['bicarb',3]]),
+    r('picado','Chocolate picado',15,[['farinha',285],['chocpo',215],['acucar',700],['oleo',310],['ovos',350],['chocleite',300]]),
+    r('blondie','Blondie de Ninho',15,[['farinha',330],['leitepo',230],['acucar',785],['oleo',345],['ovos',400]]),
+    r('redvelvet','Red Velvet',7,[['farinha',330],['chocpo',255],['acucar',870],['oleo',360],['ovos',455],['cream',290],['corante',12]]),
+    r('nesquik','Nesquik',15,[['farinha',360],['nesquik',680],['acucar',560],['mantcs',330],['ovos',420]]),
+    r('recheado','Recheado (sanduíche)',15,[['farinha',220],['acucar',550],['chocpo',170],['ovos',250],['oleo',250],['leitecond',375],['mantss',30]],[],12),
+    r('saudavel','Saudável/Funcional',15,[['demerara',590],['farroz',380],['cacau',110],['oleococo',250],['ovos',350]]),
+  ];
+  const stores=[
+    {id:'s1',name:'Café Aroma (exemplo)',price:7,contact:'(41) 9xxxx-xxxx',last:addDays(T,-7)},
+    {id:'s2',name:'Empório Centro (exemplo)',price:6.5,contact:'',last:addDays(T,-6)},
+  ];
+  S={ingredients,recipes,stores,lots:[],positions:[],moves:[],fin:[],
+     settings:{alertDays:3,directPrice:10,packaging:[{ing:'bopp',qty:1},{ing:'cinta',qty:1}]}};
+  // lotes de exemplo (sem baixar estoque)
+  const mk=(rec,daysAgo,good,places)=>{const R=REC(rec);const date=addDays(T,-daysAgo);const uc=recipeUnitCost(R,'35x35');
+    const L={id:uid(),recipe:rec,form:'35x35',date,good,loss:0,cost:uc*good,unitCost:uc};S.lots.push(L);
+    places.forEach(([loc,q])=>{const p={id:uid(),lot:L.id,loc,qty:q};if(loc==='cong')p.remaining=R.validity;else p.expiry=addDays(date,R.validity);S.positions.push(p)});return L};
+  mk('trad',9,25,[['s1',10],['s2',8],['casa',3]]);
+  mk('nutella',12,25,[['s1',6],['casa',2]]);
+  mk('brookie',4,25,[['casa',20]]);
+  mk('trad',20,25,[['cong',15]]);
+  mk('redvelvet',6,25,[['s2',4]]);
+  // histórico financeiro / vendas de exemplo (3 meses)
+  const uc=recipeUnitCost(REC('trad'),'35x35');
+  for(let m=2;m>=0;m--){
+    const base=m===0?T:addDays(T,-30*m);
+    [[ 's1',40,7],[ 's2',30,6.5]].forEach(([sid,q,p],k)=>{const d=m===0?T:addDays(base,-k*5);
+      S.moves.push({id:uid(),date:d,type:'acerto',recipe:'trad',qty:q,value:q*p,unitCost:uc,loc:sid});
+      S.fin.push({id:uid(),type:'rec',cat:'Consignado',desc:'Acerto '+STO(sid).name,value:q*p,date:d,due:d,paid:!(m===0&&sid==='s2'),paidAt:(m===0&&sid==='s2')?null:d});});
+    const dd=m===0?T:addDays(base,-2);
+    S.moves.push({id:uid(),date:dd,type:'venda',recipe:'brookie',qty:18,value:180,unitCost:uc*1.2});
+    S.fin.push({id:uid(),type:'rec',cat:'Venda direta',desc:'Vendas diretas',value:180,date:dd,due:dd,paid:true,paidAt:dd});
+    S.moves.push({id:uid(),date:m===0?T:addDays(base,-1),type:'perda',recipe:'trad',qty:3,value:0,unitCost:uc,reason:'Vencido em loja'});
+    [['Ingredientes','Compra mercado',260],['Embalagens','BOPP + cintas',85],['Gás/Energia','Gás',45],['Transporte','Combustível entregas',60],['Marketing','Impulsionamento Instagram',40]].forEach(([cat,desc,v],k)=>{const d=m===0?(k<2?T:addDays(T,-1)):addDays(base,-8-k);
+      S.fin.push({id:uid(),type:'desp',cat,desc,value:v,date:d,due:d,paid:true,paidAt:d})});
+  }
+  S.fin.push({id:uid(),type:'desp',cat:'Embalagens',desc:'Cintas personalizadas (gráfica)',value:120,date:T,due:addDays(T,10),paid:false,paidAt:null});
+  return S;
+}
+
+/* ════════════ DOMÍNIO ════════════ */
+function recipeLines(R,form){
+  const u=R.yields[form]||25;
+  return [...R.items.map(x=>({ing:x.ing,qty:x.qty})),...R.perUnit.map(x=>({ing:x.ing,qty:+(x.qty*u).toFixed(1)}))];
+}
+function packLines(units){return S.settings.packaging.map(p=>({ing:p.ing,qty:p.qty*units}))}
+function linesCost(lines){return lines.reduce((s,l)=>s+(ING(l.ing)?.cost||0)*(+l.qty||0),0)}
+function recipeUnitCost(R,form){const u=R.yields[form]||25;return (linesCost(recipeLines(R,form))+linesCost(packLines(u)))/u}
+
+function daysLeft(p){return p.loc==='cong'?p.remaining:diff(p.expiry,today())}
+function expBadge(p){
+  const d=daysLeft(p);
+  if(p.loc==='cong')return `<span class="badge info">❄ pausado · ${d}d restantes</span>`;
+  if(d<0)return `<span class="badge bad">Vencido há ${-d}d</span>`;
+  if(d===0)return `<span class="badge bad">Vence hoje</span>`;
+  if(d<=S.settings.alertDays)return `<span class="badge warn">Vence em ${d}d · ${fd(p.expiry)}</span>`;
+  return `<span class="badge ok">Até ${fd(p.expiry)} · ${d}d</span>`;
+}
+function locName(loc){return loc==='casa'?'Casa':loc==='cong'?'Casa · Congelado':(STO(loc)?.name||'Loja')}
+function posOf(loc){return S.positions.filter(p=>p.loc===loc&&p.qty>0).sort((a,b)=>daysLeft(a)-daysLeft(b))}
+function sumLoc(pred){return S.positions.filter(p=>p.qty>0&&pred(p.loc)).reduce((s,p)=>s+p.qty,0)}
+const isStore=loc=>loc!=='casa'&&loc!=='cong';
+function recName(p){return REC(LOT(p.lot)?.recipe)?.name||'?'}
+
+function putPos(lotId,loc,qty,{expiry,remaining}){
+  let p=S.positions.find(x=>x.lot===lotId&&x.loc===loc&&(loc==='cong'?x.remaining===remaining:x.expiry===expiry));
+  if(p)p.qty+=qty;else{p={id:uid(),lot:lotId,loc,qty};if(loc==='cong')p.remaining=remaining;else p.expiry=expiry;S.positions.push(p)}
+}
+function transfer(pos,qty,to){
+  qty=Math.min(qty,pos.qty);if(qty<=0)return;
+  pos.qty-=qty;
+  let meta;
+  if(to==='cong')meta={remaining:Math.max(0,daysLeft(pos))};
+  else if(pos.loc==='cong')meta={expiry:addDays(today(),pos.remaining)};
+  else meta={expiry:pos.expiry};
+  putPos(pos.lot,to,qty,meta);
+  S.moves.push({id:uid(),date:today(),type:'transf',recipe:LOT(pos.lot).recipe,qty,from:pos.loc,to,value:0,unitCost:LOT(pos.lot).unitCost});
+}
+function fefo(recipe,qty,loc='casa'){
+  const ps=posOf(loc).filter(p=>LOT(p.lot).recipe===recipe);const out=[];let need=qty;
+  for(const p of ps){if(need<=0)break;const t=Math.min(p.qty,need);out.push({pos:p,take:t});need-=t}
+  return {alloc:out,short:Math.max(0,need)};
+}
+function availByRecipe(loc){const m={};posOf(loc).forEach(p=>{const r=LOT(p.lot).recipe;m[r]=(m[r]||0)+p.qty});return m}
+function nearestExp(loc){const ps=posOf(loc);return ps.length?ps[0]:null}
+
+/* ════════════ NAV ════════════ */
+let TAB='home',SUB={est:'brownies',fin:'resumo',cad:'receitas',estLoc:'todos'},FINM=today().slice(0,7);
+const TITLES={home:['Coli Brownies','Visão geral'],prod:['Produção','Fornadas e lotes'],est:['Estoque','Brownies e ingredientes'],loj:['Lojas','Consignado'],fin:['Financeiro','Caixa, contas e DRE'],cad:['Cadastros','Receitas, ingredientes, lojas']};
+function go(t){TAB=t;render()}
+function setSub(k,v){SUB[k]=v;render()}
+function render(){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.t===TAB));
+  $('#t-title').textContent=TITLES[TAB][0];$('#t-sub').textContent=TITLES[TAB][1];
+  $('#body').innerHTML=({home:vHome,prod:vProd,est:vEst,loj:vLoj,fin:vFin,cad:vCad})[TAB]();
+  save();
+}
+
+/* ════════════ INÍCIO ════════════ */
+function vHome(){
+  const casa=sumLoc(l=>l==='casa'),cong=sumLoc(l=>l==='cong'),loj=sumLoc(isStore);
+  const d=dre(today().slice(0,7));
+  const alertPos=S.positions.filter(p=>p.qty>0&&p.loc!=='cong'&&daysLeft(p)<=S.settings.alertDays).sort((a,b)=>daysLeft(a)-daysLeft(b));
+  const low=S.ingredients.filter(i=>i.min>0&&i.stock<i.min);
+  const rec=S.fin.filter(f=>f.type==='rec'&&!f.paid).reduce((s,f)=>s+f.value,0);
+  const pag=S.fin.filter(f=>f.type==='desp'&&!f.paid).reduce((s,f)=>s+f.value,0);
+  return `
+  <div class="kpis">
+    <div class="kpi"><div class="l">Em casa</div><div class="v">${casa}</div><div class="s">unidades prontas</div></div>
+    <div class="kpi"><div class="l">Congelados</div><div class="v">${cong}</div><div class="s">validade pausada</div></div>
+    <div class="kpi"><div class="l">Nas lojas</div><div class="v">${loj}</div><div class="s">${S.stores.length} lojas</div></div>
+    <div class="kpi"><div class="l">Resultado ${monthLabel(today().slice(0,7))}</div><div class="v" style="color:${d.res>=0?'var(--green)':'var(--red)'}">${money(d.res)}</div><div class="s">DRE do mês</div></div>
+  </div>
+  <h3>Ações rápidas</h3>
+  <div class="qa">
+    <button class="btn" onclick="shProd()">＋ Nova fornada</button>
+    <button class="btn ghost" onclick="shSend()">→ Enviar p/ loja</button>
+    <button class="btn ghost" onclick="shSale()">$ Venda direta</button>
+    <button class="btn ghost" onclick="shBuy()">🛒 Registrar compra</button>
+  </div>
+  <h3>Validade · próximos ${S.settings.alertDays} dias</h3>
+  <div class="card">${alertPos.length?alertPos.map(p=>`<div class="li"><div class="grow"><div class="t">${recName(p)} · ${p.qty} un</div><div class="d">${locName(p.loc)} · lote ${fdy(LOT(p.lot).date)}</div></div>${expBadge(p)}</div>`).join(''):'<div class="empty">Nada vencendo 👌</div>'}</div>
+  <h3>Ingredientes abaixo do mínimo</h3>
+  <div class="card">${low.length?low.map(i=>`<div class="li"><div class="grow"><div class="t">${esc(i.name)}</div><div class="d">Estoque ${fmtQ(i,i.stock)} · mín. ${fmtQ(i,i.min)}</div></div><button class="btn sm ghost" onclick="shBuy('${i.id}')">Comprar</button></div>`).join(''):'<div class="empty">Tudo acima do mínimo</div>'}</div>
+  <h3>Contas em aberto</h3>
+  <div class="kpis"><div class="kpi" onclick="SUB.fin='lanc';FINF='pend';go('fin')"><div class="l">A receber</div><div class="v" style="font-size:1.1rem;color:var(--green)">${money(rec)}</div></div>
+  <div class="kpi" onclick="SUB.fin='lanc';FINF='pend';go('fin')"><div class="l">A pagar</div><div class="v" style="font-size:1.1rem;color:var(--red)">${money(pag)}</div></div></div>`;
+}
+
+/* ════════════ PRODUÇÃO ════════════ */
+function vProd(){
+  const lots=[...S.lots].sort((a,b)=>b.date.localeCompare(a.date));
+  return `<div class="btns" style="margin-bottom:12px"><button class="btn" onclick="shProd()">＋ Nova fornada</button><button class="btn outline" onclick="shPlan()">📋 Lista de compras</button></div>
+  <h3>Lotes produzidos</h3>
+  <div class="card">${lots.length?lots.map(l=>{const R=REC(l.recipe);const ps=S.positions.filter(p=>p.lot===l.id&&p.qty>0);
+    const where=ps.map(p=>`${p.qty} ${p.loc==='casa'?'casa':p.loc==='cong'?'cong.':STO(p.loc)?.name.split(' ')[0]}`).join(' · ')||'esgotado';
+    return `<div class="li"><div class="grow"><div class="t">${R?.name} <span class="badge neu">${l.form}</span></div>
+      <div class="d">${fdy(l.date)} · ${l.good} boas${l.loss?` · ${l.loss} perdas`:''} · ${money(l.unitCost)}/un</div><div class="d">Agora: ${where}</div></div>
+      <div style="text-align:right"><div class="t">${money(l.cost)}</div><div class="d">custo lote</div></div></div>`}).join(''):'<div class="empty">Nenhuma fornada</div>'}</div>`;
+}
+let TP;
+function shProd(){
+  const R=S.recipes[0];TP={recipe:R.id,form:'35x35',date:today(),lines:recipeLines(R,'35x35'),good:R.yields['35x35'],loss:0,freeze:0};
+  openSheet('Nova fornada',prodBody());
+}
+function prodBody(){
+  const R=REC(TP.recipe);
+  return `<div class="g2"><div class="fld"><label>Sabor</label><select onchange="TP.recipe=this.value;prodReset()">${S.recipes.map(r=>`<option value="${r.id}" ${r.id===TP.recipe?'selected':''}>${esc(r.name)}</option>`).join('')}</select></div>
+  <div class="fld"><label>Forma</label><select onchange="TP.form=this.value;prodReset()">${FORMS.map(f=>`<option ${f===TP.form?'selected':''}>${f}</option>`).join('')}</select></div></div>
+  <div class="g3"><div class="fld"><label>Data</label><input type="date" value="${TP.date}" onchange="TP.date=this.value;prodSum()"></div>
+  <div class="fld"><label>Boas</label><input type="number" value="${TP.good}" oninput="TP.good=+this.value;prodSum()"></div>
+  <div class="fld"><label>Perdas</label><input type="number" value="${TP.loss}" oninput="TP.loss=+this.value;prodSum()"></div></div>
+  <div class="fld"><label>Congelar hoje (un)</label><input type="number" value="${TP.freeze}" oninput="TP.freeze=+this.value;prodSum()"></div>
+  <h3>Consumo de ingredientes (ajuste se precisar)</h3>
+  <div id="tp-lines">${prodLinesHtml()}</div>
+  <button class="btn sm outline" onclick="TP.lines.push({ing:S.ingredients[0].id,qty:0});$('#tp-lines').innerHTML=prodLinesHtml();prodSum()">＋ ingrediente</button>
+  <div class="note">Embalagem (BOPP + cinta) é baixada automaticamente por unidade boa. Validade: ${R.validity} dias a partir da data da fornada.</div>
+  <div id="tp-sum"></div>
+  <button class="btn block" onclick="saveProd()">Registrar fornada</button>`;
+}
+function prodLinesHtml(){return TP.lines.map((l,i)=>{const I=ING(l.ing);const low=I&&I.stock<l.qty;
+  return `<div class="line"><select onchange="TP.lines[${i}].ing=this.value;prodSum()">${S.ingredients.map(x=>`<option value="${x.id}" ${x.id===l.ing?'selected':''}>${esc(x.name)}</option>`).join('')}</select>
+  <input type="number" value="${l.qty}" style="${low?'border-color:var(--red)':''}" oninput="TP.lines[${i}].qty=+this.value;prodSum()" title="${I?.unit}">
+  <button class="x" onclick="TP.lines.splice(${i},1);$('#tp-lines').innerHTML=prodLinesHtml();prodSum()">×</button></div>`}).join('')}
+function prodReset(){const R=REC(TP.recipe);TP.lines=recipeLines(R,TP.form);TP.good=R.yields[TP.form];$('#sh-body').innerHTML=prodBody();prodSum()}
+function prodSum(){
+  const all=[...TP.lines,...packLines(TP.good)];const c=linesCost(all);
+  const short=all.filter(l=>ING(l.ing)&&ING(l.ing).stock<l.qty).map(l=>ING(l.ing).name);
+  $('#tp-sum').innerHTML=`<div class="sumbox"><div class="between"><span>Custo do lote</span><b>${money(c)}</b></div><div class="between"><span>Custo por unidade boa</span><b>${money(TP.good?c/TP.good:0)}</b></div></div>
+  ${short.length?`<div class="note" style="color:var(--red)">Estoque insuficiente: ${short.map(esc).join(', ')}. Vai ficar negativo — registre a compra.</div>`:''}`;
+}
+function saveProd(){
+  if(!TP.good||TP.good<1)return toast('Informe as unidades boas');
+  const R=REC(TP.recipe);const all=[...TP.lines,...packLines(TP.good)];const c=linesCost(all);
+  all.forEach(l=>{const I=ING(l.ing);if(I)I.stock-=+l.qty||0});
+  const L={id:uid(),recipe:R.id,form:TP.form,date:TP.date,good:TP.good,loss:TP.loss,cost:c,unitCost:c/TP.good,consumption:all};S.lots.push(L);
+  const fz=Math.min(TP.freeze||0,TP.good);
+  if(TP.good-fz>0)putPos(L.id,'casa',TP.good-fz,{expiry:addDays(TP.date,R.validity)});
+  if(fz>0)putPos(L.id,'cong',fz,{remaining:Math.max(0,R.validity-diff(today(),TP.date))});
+  closeSheet();render();toast(`Lote registrado · ${TP.good} ${R.name}`);
+}
+
+/* lista de compras */
+let TPL;
+function shPlan(){TPL={rows:[{recipe:'trad',form:'35x35',n:2}],min:true};openSheet('Lista de compras',planBody())}
+function planBody(){
+  return `<div class="note">Informe as fornadas planejadas. O app soma a ficha técnica + embalagem e compara com o estoque.</div>
+  ${TPL.rows.map((r,i)=>`<div class="line" style="grid-template-columns:1fr 80px 56px 28px"><select onchange="TPL.rows[${i}].recipe=this.value;planCalc()">${S.recipes.map(x=>`<option value="${x.id}" ${x.id===r.recipe?'selected':''}>${esc(x.name)}</option>`).join('')}</select>
+  <select onchange="TPL.rows[${i}].form=this.value;planCalc()">${FORMS.map(f=>`<option ${f===r.form?'selected':''}>${f}</option>`).join('')}</select>
+  <input type="number" value="${r.n}" oninput="TPL.rows[${i}].n=+this.value;planCalc()" title="nº de formas">
+  <button class="x" onclick="TPL.rows.splice(${i},1);$('#sh-body').innerHTML=planBody();planCalc()">×</button></div>`).join('')}
+  <button class="btn sm outline" onclick="TPL.rows.push({recipe:'trad',form:'35x35',n:1});$('#sh-body').innerHTML=planBody();planCalc()">＋ sabor</button>
+  <label class="row" style="margin:10px 0;font-size:.85rem"><input type="checkbox" style="width:auto" ${TPL.min?'checked':''} onchange="TPL.min=this.checked;planCalc()"> Repor também até o estoque mínimo</label>
+  <div id="pl-out"></div>`;
+}
+function planCalc(){
+  const need={};
+  TPL.rows.forEach(r=>{const R=REC(r.recipe);for(let k=0;k<(r.n||0);k++)[...recipeLines(R,r.form),...packLines(R.yields[r.form])].forEach(l=>need[l.ing]=(need[l.ing]||0)+l.qty)});
+  if(TPL.min)S.ingredients.forEach(i=>{if(i.min>0)need[i.id]=(need[i.id]||0)+i.min});
+  const rows=Object.entries(need).map(([id,q])=>{const I=ING(id);const falta=Math.max(0,q-I.stock);return {I,q,falta,packs:I.packSize?Math.ceil(falta/I.packSize):0}}).filter(x=>x.falta>0);
+  const total=rows.reduce((s,x)=>s+x.packs*x.I.packSize*x.I.cost,0);
+  TPL.text='Lista de compras Coli Brownies\n'+rows.map(x=>`- ${x.I.name}: ${x.packs}x ${x.I.packLabel}`).join('\n');
+  $('#pl-out').innerHTML=rows.length?`<table class="t"><tr><th>Item</th><th class="r">Falta</th><th class="r">Comprar</th></tr>${rows.map(x=>`<tr><td>${esc(x.I.name)}</td><td class="r">${fmtQ(x.I,x.falta)}</td><td class="r"><b>${x.packs}×</b> <span style="color:var(--sub);font-size:.72rem">${esc(x.I.packLabel)}</span></td></tr>`).join('')}</table>
+  <div class="sumbox"><div class="between"><span>Estimativa</span><b>${money(total)}</b></div></div><button class="btn block ghost" onclick="copyList()">Copiar lista (WhatsApp)</button>`:'<div class="empty">Estoque cobre o planejado ✅</div>';
+}
+function copyList(){try{navigator.clipboard.writeText(TPL.text);toast('Lista copiada')}catch(e){toast('Não foi possível copiar')}}
+
+/* ════════════ ESTOQUE ════════════ */
+function vEst(){
+  return `<div class="seg"><button class="${SUB.est==='brownies'?'on':''}" onclick="setSub('est','brownies')">Brownies</button><button class="${SUB.est==='ing'?'on':''}" onclick="setSub('est','ing')">Ingredientes</button></div>`+(SUB.est==='brownies'?vEstB():vEstI());
+}
+function vEstB(){
+  const locs=['casa','cong',...S.stores.map(s=>s.id)];
+  const f=SUB.estLoc;const show=f==='todos'?locs:[f];
+  return `<div class="chips"><button class="chip ${f==='todos'?'on':''}" onclick="setSub('estLoc','todos')">Todos</button>${locs.map(l=>`<button class="chip ${f===l?'on':''}" onclick="setSub('estLoc','${l}')">${l==='casa'?'Casa':l==='cong'?'Congelado':esc(STO(l).name.split(' (')[0])} · ${sumLoc(x=>x===l)}</button>`).join('')}</div>
+  ${show.map(l=>{const ps=posOf(l);if(!ps.length&&f==='todos')return '';return `<h3>${esc(locName(l))} · ${ps.reduce((s,p)=>s+p.qty,0)} un</h3><div class="card">${ps.length?ps.map(p=>`<div class="li"><div class="grow"><div class="t">${recName(p)} · ${p.qty} un</div><div class="d">Lote ${fdy(LOT(p.lot).date)} · ${money(LOT(p.lot).unitCost)}/un</div><div style="margin-top:4px">${expBadge(p)}</div></div><button class="btn sm outline" onclick="shPos('${p.id}')">Mover</button></div>`).join(''):'<div class="empty">Vazio</div>'}</div>`}).join('')}
+  <div class="note">Ordem por vencimento (FEFO). Congelado: a contagem de validade pausa e recomeça ao descongelar.</div>`;
+}
+function shPos(id){
+  const p=S.positions.find(x=>x.id===id);const L=LOT(p.lot);
+  const dest=[['casa','Casa (descongelar / recolher)'],['cong','Congelar'],...S.stores.map(s=>[s.id,'→ '+s.name])].filter(([v])=>v!==p.loc);
+  const lateFreeze=p.loc==='casa'&&L.date!==today();
+  openSheet(`${recName(p)} · ${locName(p.loc)}`,`
+  <div class="note">Lote ${fdy(L.date)} · ${p.qty} un disponíveis · ${expBadge(p)}</div>
+  <div class="g2"><div class="fld"><label>Quantidade</label><input id="pq" type="number" value="${p.qty}"></div>
+  <div class="fld"><label>Ação</label><select id="pa" onchange="$('#pw').style.display=this.value==='cong'&&${lateFreeze}?'block':'none';$('#pr').style.display=this.value==='perda'?'block':'none';$('#pp').style.display=this.value==='venda'?'block':'none'">
+    ${dest.map(([v,n])=>`<option value="${v}">${esc(n)}</option>`).join('')}${p.loc==='casa'?'<option value="venda">Venda direta</option>':''}<option value="perda">Baixa por perda</option></select></div></div>
+  <div class="note" id="pw" style="display:${dest[0][0]==='cong'&&lateFreeze?'block':'none'};color:var(--orange)">Ebook: congelar no mesmo dia da produção mantém a validade. Este lote é de ${fdy(L.date)} — tende a ressecar.</div>
+  <div class="fld" id="pr" style="display:none"><label>Motivo</label><select id="prs"><option>Vencido</option><option>Avariado/quebrado</option><option>Degustação/brinde</option><option>Outro</option></select></div>
+  <div class="fld" id="pp" style="display:none"><label>Preço unitário</label><input id="ppv" type="number" step="0.5" value="${S.settings.directPrice}"></div>
+  <button class="btn block" onclick="doPos('${p.id}')">Confirmar</button>`);
+}
+function doPos(id){
+  const p=S.positions.find(x=>x.id===id);const q=Math.min(+$('#pq').value||0,p.qty);const a=$('#pa').value;const L=LOT(p.lot);
+  if(q<=0)return toast('Quantidade inválida');
+  if(a==='perda'){p.qty-=q;S.moves.push({id:uid(),date:today(),type:'perda',recipe:L.recipe,qty:q,value:0,unitCost:L.unitCost,reason:$('#prs').value,loc:p.loc})}
+  else if(a==='venda'){const pr=+$('#ppv').value||0;p.qty-=q;regSale([{pos:p,take:q,already:true}],pr)}
+  else transfer(p,q,a);
+  closeSheet();render();toast('Movimentação registrada');
+}
+function vEstI(){
+  const list=[...S.ingredients].sort((a,b)=>(a.stock<a.min?-1:0)-(b.stock<b.min?-1:0)||a.name.localeCompare(b.name));
+  return `<div class="btns" style="margin-bottom:10px"><button class="btn" onclick="shBuy()">🛒 Registrar compra</button><button class="btn outline" onclick="shPlan()">📋 Lista de compras</button></div>
+  <div class="card">${list.map(i=>`<div class="li"><div class="grow"><div class="t">${esc(i.name)}</div><div class="d">${unitCostLabel(i)} · mín. ${fmtQ(i,i.min)}</div></div>
+  <div style="text-align:right"><div class="t" style="color:${i.stock<0?'var(--red)':'inherit'}">${fmtQ(i,i.stock)}</div>${i.min>0&&i.stock<i.min?'<span class="badge bad">repor</span>':''}</div>
+  <button class="btn sm outline" onclick="shInv('${i.id}')">Contar</button></div>`).join('')}</div>`;
+}
+function shInv(id){const i=ING(id);openSheet('Inventário · '+i.name,`<div class="note">Sistema: ${fmtQ(i,i.stock)}. Informe a quantidade contada (${i.unit}).</div>
+  <div class="fld"><label>Quantidade contada (${i.unit})</label><input id="iv" type="number" value="${Math.round(i.stock)}"></div><button class="btn block" onclick="ING('${id}').stock=+$('#iv').value||0;closeSheet();render();toast('Estoque ajustado')">Salvar contagem</button>`)}
+function shBuy(id){
+  const i=ING(id)||S.ingredients[0];
+  openSheet('Registrar compra',`<div class="fld"><label>Item</label><select id="bi" onchange="buyFill()">${S.ingredients.map(x=>`<option value="${x.id}" ${x.id===i.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select></div>
+  <div class="g2"><div class="fld"><label>Nº de embalagens</label><input id="bn" type="number" value="1" oninput="buyQ()"></div><div class="fld"><label id="bql">Quantidade total</label><input id="bq" type="number"></div></div>
+  <div class="g2"><div class="fld"><label>Valor total pago (R$)</label><input id="bv" type="number" step="0.01"></div><div class="fld"><label>Data</label><input id="bd" type="date" value="${today()}"></div></div>
+  <div class="g2"><div class="fld"><label>Pagamento</label><select id="bs" onchange="$('#bdw').style.display=this.value==='0'?'block':'none'"><option value="1">Pago</option><option value="0">A pagar</option></select></div>
+  <div class="fld" id="bdw" style="display:none"><label>Vencimento</label><input id="bdu" type="date" value="${addDays(today(),30)}"></div></div>
+  <div class="note" id="bhint"></div>
+  <button class="btn block" onclick="saveBuy()">Salvar compra</button>`);buyFill();
+}
+function buyFill(){const i=ING($('#bi').value);$('#bql').textContent='Quantidade total ('+i.unit+')';$('#bhint').textContent=`Embalagem padrão: ${i.packLabel}. Custo atual ${unitCostLabel(i)} — será recalculado por média ponderada.`;buyQ();$('#bv').value=(i.cost*(+$('#bq').value||0)).toFixed(2)}
+function buyQ(){const i=ING($('#bi').value);$('#bq').value=(+$('#bn').value||0)*(i.packSize||1)}
+function saveBuy(){
+  const i=ING($('#bi').value),q=+$('#bq').value||0,v=+$('#bv').value||0;if(q<=0||v<=0)return toast('Informe quantidade e valor');
+  const base=Math.max(0,i.stock);i.cost=(base*i.cost+v)/(base+q);i.stock+=q;
+  const paid=$('#bs').value==='1',d=$('#bd').value;
+  S.fin.push({id:uid(),type:'desp',cat:i.unit==='un'?'Embalagens':'Ingredientes',desc:'Compra '+i.name,value:v,date:d,due:paid?d:$('#bdu').value,paid,paidAt:paid?d:null});
+  closeSheet();render();toast('Compra registrada · estoque e financeiro atualizados');
+}
+
+/* ════════════ LOJAS / CONSIGNADO ════════════ */
+function vLoj(){
+  return `<div class="btns" style="margin-bottom:10px"><button class="btn" onclick="shSend()">→ Enviar brownies</button><button class="btn outline" onclick="shStore()">＋ Loja</button></div>
+  ${S.stores.map(s=>{const ps=posOf(s.id);const q=ps.reduce((a,p)=>a+p.qty,0);const n=ps[0];
+    const ven=ps.filter(p=>daysLeft(p)<0).reduce((a,p)=>a+p.qty,0);
+    return `<div class="card"><div class="between"><div><h2>${esc(s.name)}</h2><div class="d" style="font-size:.76rem;color:var(--sub)">Repasse ${money(s.price)}/un · último acerto ${s.last?fdy(s.last):'—'}</div></div><button class="btn sm outline" onclick="shStore('${s.id}')">Editar</button></div>
+    <div class="kpis" style="margin:10px 0 8px"><div class="kpi"><div class="l">Na loja</div><div class="v">${q} un</div><div class="s">${money(q*s.price)} potencial</div></div>
+    <div class="kpi"><div class="l">Próx. vencimento</div><div style="margin-top:6px">${n?expBadge(n):'<span class="badge neu">—</span>'}</div>${ven?`<div class="s" style="color:var(--red)">${ven} un vencidas</div>`:''}</div></div>
+    ${ps.map(p=>`<div class="li"><div class="grow"><div class="t">${recName(p)} · ${p.qty} un</div><div class="d">Lote ${fdy(LOT(p.lot).date)}</div></div>${expBadge(p)}</div>`).join('')}
+    <div class="btns" style="margin-top:10px"><button class="btn sm" onclick="shAcerto('${s.id}')">Fazer acerto</button><button class="btn sm ghost" onclick="shSend('${s.id}')">Repor</button></div></div>`}).join('')||'<div class="empty">Cadastre sua primeira loja</div>'}`;
+}
+function shStore(id){const s=STO(id)||{name:'',price:7,contact:''};
+  openSheet(id?'Editar loja':'Nova loja',`<div class="fld"><label>Nome</label><input id="sn" value="${esc(s.name)}"></div>
+  <div class="g2"><div class="fld"><label>Repasse por unidade (R$)</label><input id="sp" type="number" step="0.5" value="${s.price}"></div><div class="fld"><label>Contato</label><input id="sc" value="${esc(s.contact)}"></div></div>
+  <button class="btn block" onclick="saveStore('${id||''}')">Salvar</button>`)}
+function saveStore(id){const n=$('#sn').value.trim();if(!n)return toast('Informe o nome');
+  if(id){const s=STO(id);s.name=n;s.price=+$('#sp').value||0;s.contact=$('#sc').value}else S.stores.push({id:uid(),name:n,price:+$('#sp').value||0,contact:$('#sc').value,last:null});closeSheet();render()}
+let TS;
+function shSend(sid){
+  const av=availByRecipe('casa');TS={store:sid||S.stores[0]?.id,q:{}};
+  if(!S.stores.length)return toast('Cadastre uma loja primeiro');
+  openSheet('Enviar para loja',`<div class="fld"><label>Loja</label><select onchange="TS.store=this.value">${S.stores.map(s=>`<option value="${s.id}" ${s.id===TS.store?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
+  <h3>Disponível em casa (sai o que vence primeiro)</h3>
+  ${Object.keys(av).length?Object.entries(av).map(([r,q])=>`<div class="li"><div class="grow"><div class="t">${REC(r).name}</div><div class="d">${q} un em casa</div></div><input type="number" style="width:80px" placeholder="0" oninput="TS.q['${r}']=Math.min(+this.value,${q})"></div>`).join(''):'<div class="empty">Sem estoque em casa. Descongele ou produza.</div>'}
+  <button class="btn block" style="margin-top:12px" onclick="doSend()">Registrar envio</button>`);
+}
+function doSend(){let tot=0;Object.entries(TS.q).forEach(([r,q])=>{if(q>0){fefo(r,q).alloc.forEach(a=>transfer(a.pos,a.take,TS.store));tot+=q}});
+  if(!tot)return toast('Nenhuma quantidade');closeSheet();render();toast(`${tot} un enviadas para ${STO(TS.store).name}`)}
+let TA;
+function shAcerto(sid){
+  const s=STO(sid);const ps=posOf(sid);TA={sid,rows:ps.map(p=>({pos:p,left:daysLeft(p)<0?0:p.qty,lost:daysLeft(p)<0?p.qty:0}))};
+  if(!ps.length)return toast('Loja sem brownies');
+  openSheet('Acerto · '+s.name,`<div class="note">Conte o que sobrou na prateleira. Vencidos/avariados recolhidos viram perda. Vendido = enviado − sobra − recolhido.</div>
+  ${TA.rows.map((r,i)=>`<div class="card" style="padding:10px 12px"><div class="between"><div><div class="t" style="font-weight:700">${recName(r.pos)}</div><div class="d" style="font-size:.75rem;color:var(--sub)">Lote ${fdy(LOT(r.pos.lot).date)} · estava ${r.pos.qty} un</div></div>${expBadge(r.pos)}</div>
+  <div class="g2" style="margin-top:8px"><div class="fld"><label>Sobrou na loja</label><input type="number" value="${r.left}" oninput="TA.rows[${i}].left=+this.value;acSum()"></div><div class="fld"><label>Recolhido (perda)</label><input type="number" value="${r.lost}" oninput="TA.rows[${i}].lost=+this.value;acSum()"></div></div></div>`).join('')}
+  <div id="ac-sum"></div>
+  <div class="g2"><div class="fld"><label>Recebimento</label><select id="acp" onchange="$('#acdw').style.display=this.value==='0'?'block':'none'"><option value="1">Recebido agora</option><option value="0">A receber</option></select></div>
+  <div class="fld" id="acdw" style="display:none"><label>Vencimento</label><input id="acd" type="date" value="${addDays(today(),7)}"></div></div>
+  <button class="btn block" onclick="doAcerto()">Fechar acerto</button>`);
+  acSum();
+}
+function acSum(){const s=STO(TA.sid);let sold=0,lost=0,err=false;TA.rows.forEach(r=>{const v=r.pos.qty-r.left-r.lost;if(v<0)err=true;sold+=Math.max(0,v);lost+=r.lost});TA.sold=sold;TA.err=err;
+  $('#ac-sum').innerHTML=`<div class="sumbox"><div class="between"><span>Vendidos</span><b>${sold} un</b></div><div class="between"><span>Perdas recolhidas</span><b>${lost} un</b></div><div class="between"><span>Valor do acerto</span><b>${money(sold*s.price)}</b></div></div>${err?'<div class="note" style="color:var(--red)">Sobra + recolhido maior que o enviado em algum lote.</div>':''}`}
+function doAcerto(){
+  if(TA.err)return toast('Corrija as quantidades');const s=STO(TA.sid);const paid=$('#acp').value==='1';
+  TA.rows.forEach(r=>{const L=LOT(r.pos.lot);const sold=r.pos.qty-r.left-r.lost;
+    if(sold>0)S.moves.push({id:uid(),date:today(),type:'acerto',recipe:L.recipe,qty:sold,value:sold*s.price,unitCost:L.unitCost,loc:s.id});
+    if(r.lost>0)S.moves.push({id:uid(),date:today(),type:'perda',recipe:L.recipe,qty:r.lost,value:0,unitCost:L.unitCost,reason:'Recolhido em loja',loc:s.id});
+    r.pos.qty=r.left});
+  if(TA.sold>0)S.fin.push({id:uid(),type:'rec',cat:'Consignado',desc:'Acerto '+s.name,value:TA.sold*s.price,date:today(),due:paid?today():$('#acd').value,paid,paidAt:paid?today():null});
+  s.last=today();closeSheet();render();toast(`Acerto fechado · ${money(TA.sold*s.price)}`);
+}
+/* venda direta */
+let TV;
+function shSale(){const av=availByRecipe('casa');TV={q:{}};
+  openSheet('Venda direta',`<div class="fld"><label>Preço unitário (R$)</label><input id="vp" type="number" step="0.5" value="${S.settings.directPrice}"></div>
+  ${Object.keys(av).length?Object.entries(av).map(([r,q])=>`<div class="li"><div class="grow"><div class="t">${REC(r).name}</div><div class="d">${q} un em casa</div></div><input type="number" style="width:80px" placeholder="0" oninput="TV.q['${r}']=Math.min(+this.value,${q})"></div>`).join(''):'<div class="empty">Sem estoque em casa</div>'}
+  <button class="btn block" style="margin-top:12px" onclick="doSale()">Registrar venda</button>`)}
+function doSale(){const pr=+$('#vp').value||0;let al=[];Object.entries(TV.q).forEach(([r,q])=>{if(q>0)al=al.concat(fefo(r,q).alloc)});if(!al.length)return toast('Nenhuma quantidade');regSale(al,pr);closeSheet();render();toast('Venda registrada')}
+function regSale(alloc,price){let tot=0;alloc.forEach(a=>{const L=LOT(a.pos.lot);if(!a.already)a.pos.qty-=a.take;tot+=a.take*price;
+  S.moves.push({id:uid(),date:today(),type:'venda',recipe:L.recipe,qty:a.take,value:a.take*price,unitCost:L.unitCost})});
+  S.fin.push({id:uid(),type:'rec',cat:'Venda direta',desc:'Venda direta',value:tot,date:today(),due:today(),paid:true,paidAt:today()})}
+
+/* ════════════ FINANCEIRO ════════════ */
+let FINF='todos';
+function dre(ym){
+  const mv=S.moves.filter(m=>m.date.slice(0,7)===ym);
+  const cons=mv.filter(m=>m.type==='acerto').reduce((s,m)=>s+m.value,0);
+  const dir=mv.filter(m=>m.type==='venda').reduce((s,m)=>s+m.value,0);
+  const outras=S.fin.filter(f=>f.type==='rec'&&f.date.slice(0,7)===ym&&!['Consignado','Venda direta'].includes(f.cat)).reduce((s,f)=>s+f.value,0);
+  const rb=cons+dir+outras;
+  const units=mv.filter(m=>m.type==='acerto'||m.type==='venda').reduce((s,m)=>s+m.qty,0);
+  const cmv=mv.filter(m=>m.type==='acerto'||m.type==='venda').reduce((s,m)=>s+m.qty*m.unitCost,0);
+  const perdas=mv.filter(m=>m.type==='perda').reduce((s,m)=>s+m.qty*m.unitCost,0);
+  const perdasUn=mv.filter(m=>m.type==='perda').reduce((s,m)=>s+m.qty,0);
+  const lb=rb-cmv-perdas;
+  const desp={};S.fin.filter(f=>f.type==='desp'&&f.date.slice(0,7)===ym&&!STOCK_CATS.includes(f.cat)).forEach(f=>desp[f.cat]=(desp[f.cat]||0)+f.value);
+  const dt=Object.values(desp).reduce((a,b)=>a+b,0);
+  return {cons,dir,outras,rb,cmv,perdas,perdasUn,units,lb,desp,dt,res:lb-dt};
+}
+function vFin(){
+  const seg=`<div class="seg">${[['resumo','Resumo'],['lanc','Lançamentos'],['dre','DRE']].map(([k,n])=>`<button class="${SUB.fin===k?'on':''}" onclick="setSub('fin','${k}')">${n}</button>`).join('')}</div>`;
+  const mnav=`<div class="between" style="margin-bottom:10px"><button class="btn sm outline" onclick="FINM=shiftMonth(FINM,-1);render()">‹</button><b>${monthLabel(FINM)}</b><button class="btn sm outline" onclick="FINM=shiftMonth(FINM,1);render()">›</button></div>`;
+  if(SUB.fin==='resumo')return seg+mnav+vFinRes();
+  if(SUB.fin==='lanc')return seg+mnav+vFinLanc();
+  return seg+mnav+vFinDre();
+}
+function cashIn(ym,type){return S.fin.filter(f=>f.type===type&&f.paid&&(f.paidAt||f.date).slice(0,7)===ym).reduce((s,f)=>s+f.value,0)}
+function vFinRes(){
+  const ent=cashIn(FINM,'rec'),sai=cashIn(FINM,'desp');
+  const saldo=S.fin.filter(f=>f.paid&&(f.paidAt||f.date).slice(0,7)<=FINM).reduce((s,f)=>s+(f.type==='rec'?f.value:-f.value),0);
+  const rec=S.fin.filter(f=>f.type==='rec'&&!f.paid),pag=S.fin.filter(f=>f.type==='desp'&&!f.paid);
+  const months=[...Array(6)].map((_,k)=>shiftMonth(FINM,k-5));const data=months.map(m=>[m,cashIn(m,'rec'),cashIn(m,'desp')]);const mx=Math.max(1,...data.flatMap(d=>[d[1],d[2]]));
+  const ov=f=>!f.paid&&f.due<today();
+  return `<div class="kpis"><div class="kpi"><div class="l">Entradas</div><div class="v" style="font-size:1.1rem;color:var(--green)">${money(ent)}</div><div class="s">caixa no mês</div></div>
+  <div class="kpi"><div class="l">Saídas</div><div class="v" style="font-size:1.1rem;color:var(--red)">${money(sai)}</div><div class="s">caixa no mês</div></div>
+  <div class="kpi"><div class="l">Saldo acumulado</div><div class="v" style="font-size:1.1rem">${money(saldo)}</div><div class="s">até ${monthLabel(FINM)}</div></div>
+  <div class="kpi"><div class="l">Resultado (DRE)</div><div class="v" style="font-size:1.1rem">${money(dre(FINM).res)}</div><div class="s">competência</div></div></div>
+  <h3>Fluxo de caixa · 6 meses</h3>
+  <div class="card"><div class="bars">${data.map(([m,i,o])=>`<div class="bar"><div class="pair"><div class="in" style="height:${i/mx*100}%" title="${money(i)}"></div><div class="out" style="height:${o/mx*100}%" title="${money(o)}"></div></div><div class="m">${monthLabel(m).slice(0,3)}</div></div>`).join('')}</div>
+  <div class="legend"><span><i style="background:var(--green)"></i>Entradas</span><span><i style="background:var(--red);opacity:.75"></i>Saídas</span></div></div>
+  <h3>A receber · ${money(rec.reduce((s,f)=>s+f.value,0))}</h3>
+  <div class="card">${rec.length?rec.map(f=>finLi(f,ov(f))).join(''):'<div class="empty">Nada pendente</div>'}</div>
+  <h3>A pagar · ${money(pag.reduce((s,f)=>s+f.value,0))}</h3>
+  <div class="card">${pag.length?pag.map(f=>finLi(f,ov(f))).join(''):'<div class="empty">Nada pendente</div>'}</div>`;
+}
+function finLi(f,over){return `<div class="li" onclick="shFin('${f.id}')" style="cursor:pointer"><div class="grow"><div class="t">${esc(f.desc)}</div><div class="d">${f.cat} · ${fdy(f.date)}${!f.paid?` · vence ${fdy(f.due)}`:''}</div></div>
+  <div style="text-align:right"><div class="${f.type==='rec'?'money-pos':'money-neg'}">${f.type==='rec'?'+':'−'} ${money(f.value)}</div>${f.paid?'<span class="badge ok">pago</span>':over?'<span class="badge bad">atrasado</span>':'<span class="badge warn">pendente</span>'}</div></div>`}
+function vFinLanc(){
+  let L=S.fin.filter(f=>FINF==='pend'?!f.paid:f.date.slice(0,7)===FINM);L.sort((a,b)=>b.date.localeCompare(a.date));
+  return `<div class="between" style="margin-bottom:8px"><div class="chips" style="margin:0"><button class="chip ${FINF==='todos'?'on':''}" onclick="FINF='todos';render()">Do mês</button><button class="chip ${FINF==='pend'?'on':''}" onclick="FINF='pend';render()">Pendentes (todos)</button></div><button class="btn sm" onclick="shFin()">＋ Lançar</button></div>
+  <div class="card">${L.length?L.map(f=>finLi(f,!f.paid&&f.due<today())).join(''):'<div class="empty">Sem lançamentos</div>'}</div>
+  <div class="note">Vendas e acertos geram receita automaticamente; compras de ingredientes geram despesa. Use “Lançar” para gás, transporte, marketing etc.</div>`;
+}
+function shFin(id){const f=S.fin.find(x=>x.id===id)||{type:'desp',cat:'Gás/Energia',desc:'',value:'',date:today(),due:today(),paid:true};
+  const cats=t=>(t==='rec'?REV_CATS:EXP_CATS).map(c=>`<option ${c===f.cat?'selected':''}>${c}</option>`).join('');
+  openSheet(id?'Editar lançamento':'Novo lançamento',`<div class="g2"><div class="fld"><label>Tipo</label><select id="ft" onchange="$('#fc').innerHTML=(this.value==='rec'?REV_CATS:EXP_CATS).map(c=>'<option>'+c+'</option>').join('')"><option value="desp" ${f.type==='desp'?'selected':''}>Despesa</option><option value="rec" ${f.type==='rec'?'selected':''}>Receita</option></select></div>
+  <div class="fld"><label>Categoria</label><select id="fc">${cats(f.type)}</select></div></div>
+  <div class="fld"><label>Descrição</label><input id="fdsc" value="${esc(f.desc)}"></div>
+  <div class="g2"><div class="fld"><label>Valor (R$)</label><input id="fv" type="number" step="0.01" value="${f.value}"></div><div class="fld"><label>Competência</label><input id="fdt" type="date" value="${f.date}"></div></div>
+  <div class="g2"><div class="fld"><label>Status</label><select id="fp"><option value="1" ${f.paid?'selected':''}>Pago/recebido</option><option value="0" ${!f.paid?'selected':''}>Pendente</option></select></div><div class="fld"><label>Vencimento</label><input id="fdu" type="date" value="${f.due}"></div></div>
+  <div class="note">Despesas de Ingredientes/Embalagens vão para o estoque: entram no DRE via CMV quando o brownie é vendido, não no mês da compra.</div>
+  <button class="btn block" onclick="saveFin('${id||''}')">Salvar</button>${id?`<button class="btn block red" style="margin-top:8px" onclick="S.fin=S.fin.filter(x=>x.id!=='${id}');closeSheet();render()">Excluir</button>`:''}`)}
+function saveFin(id){const v=+$('#fv').value||0;if(v<=0)return toast('Informe o valor');
+  const o={type:$('#ft').value,cat:$('#fc').value,desc:$('#fdsc').value||$('#fc').value,value:v,date:$('#fdt').value,due:$('#fdu').value,paid:$('#fp').value==='1'};
+  if(id){const f=S.fin.find(x=>x.id===id);const was=f.paid;Object.assign(f,o);f.paidAt=o.paid?(was?f.paidAt:today()):null}else S.fin.push({id:uid(),...o,paidAt:o.paid?o.date:null});closeSheet();render()}
+function vFinDre(){const d=dre(FINM);const pct=v=>d.rb?` <span style="color:var(--muted);font-size:.72rem">${num(v/d.rb*100,0)}%</span>`:'';
+  return `<div class="card"><table class="t dre">
+  <tr><td><b>Receita bruta</b></td><td class="r"><b>${money(d.rb)}</b></td></tr>
+  <tr class="sub"><td>Consignado</td><td class="r">${money(d.cons)}</td></tr><tr class="sub"><td>Venda direta</td><td class="r">${money(d.dir)}</td></tr>${d.outras?`<tr class="sub"><td>Outras</td><td class="r">${money(d.outras)}</td></tr>`:''}
+  <tr><td>(−) CMV · ${d.units} un vendidas</td><td class="r">${money(-d.cmv)}${pct(d.cmv)}</td></tr>
+  <tr><td>(−) Perdas · ${d.perdasUn} un</td><td class="r">${money(-d.perdas)}${pct(d.perdas)}</td></tr>
+  <tr class="tot"><td>Lucro bruto</td><td class="r">${money(d.lb)}${pct(d.lb)}</td></tr>
+  <tr><td>(−) Despesas operacionais</td><td class="r">${money(-d.dt)}</td></tr>
+  ${Object.entries(d.desp).map(([c,v])=>`<tr class="sub"><td>${c}</td><td class="r">${money(-v)}</td></tr>`).join('')}
+  <tr class="tot"><td>Resultado</td><td class="r" style="color:${d.res>=0?'var(--green)':'var(--red)'}">${money(d.res)}${pct(d.res)}</td></tr></table></div>
+  <div class="kpis"><div class="kpi"><div class="l">Preço médio</div><div class="v" style="font-size:1.1rem">${money(d.units?(d.cons+d.dir)/d.units:0)}</div></div><div class="kpi"><div class="l">CMV médio/un</div><div class="v" style="font-size:1.1rem">${money(d.units?d.cmv/d.units:0)}</div></div></div>
+  <div class="note">Regime de competência. CMV usa o custo real do lote (ficha técnica + embalagem ao custo médio da época).</div>`}
+
+/* ════════════ CADASTROS ════════════ */
+function vCad(){
+  const seg=`<div class="seg">${[['receitas','Receitas'],['ing','Ingredientes'],['lojas','Lojas'],['cfg','Config']].map(([k,n])=>`<button class="${SUB.cad===k?'on':''}" onclick="setSub('cad','${k}')">${n}</button>`).join('')}</div>`;
+  if(SUB.cad==='receitas')return seg+`<div class="btns" style="margin-bottom:10px"><button class="btn" onclick="shRec()">＋ Receita</button></div><div class="card"><table class="t"><tr><th>Sabor</th><th class="r">Rend.</th><th class="r">Valid.</th><th class="r">Custo/un</th></tr>
+    ${S.recipes.map(r=>`<tr onclick="shRec('${r.id}')" style="cursor:pointer"><td><b>${esc(r.name)}</b></td><td class="r">${r.yields['35x35']}/${r.yields['40x30']}</td><td class="r">${r.validity}d</td><td class="r">${money(recipeUnitCost(r,'35x35'))}</td></tr>`).join('')}</table>
+    <div class="note">Rendimento = 35x35 / 40x30. Custo/un inclui embalagem, a custo médio atual. Toque para editar a ficha técnica.</div></div>`;
+  if(SUB.cad==='ing')return seg+`<div class="btns" style="margin-bottom:10px"><button class="btn" onclick="shIng()">＋ Ingrediente / embalagem</button></div><div class="card">${S.ingredients.map(i=>`<div class="li" onclick="shIng('${i.id}')" style="cursor:pointer"><div class="grow"><div class="t">${esc(i.name)}</div><div class="d">${esc(i.packLabel)} · ${unitCostLabel(i)} · mín. ${fmtQ(i,i.min)}</div></div><span class="badge neu">${i.unit}</span></div>`).join('')}</div>`;
+  if(SUB.cad==='lojas')return seg+`<div class="btns" style="margin-bottom:10px"><button class="btn" onclick="shStore()">＋ Loja</button></div><div class="card">${S.stores.map(s=>`<div class="li" onclick="shStore('${s.id}')" style="cursor:pointer"><div class="grow"><div class="t">${esc(s.name)}</div><div class="d">Repasse ${money(s.price)}/un ${s.contact?'· '+esc(s.contact):''}</div></div></div>`).join('')}</div>`;
+  return seg+`<div class="card"><div class="g2"><div class="fld"><label>Alerta de validade (dias)</label><input type="number" value="${S.settings.alertDays}" onchange="S.settings.alertDays=+this.value;save()"></div>
+  <div class="fld"><label>Preço venda direta (R$)</label><input type="number" step="0.5" value="${S.settings.directPrice}" onchange="S.settings.directPrice=+this.value;save()"></div></div>
+  <h3>Embalagem por unidade</h3>${S.settings.packaging.map((p,i)=>`<div class="line"><select onchange="S.settings.packaging[${i}].ing=this.value;save()">${S.ingredients.map(x=>`<option value="${x.id}" ${x.id===p.ing?'selected':''}>${esc(x.name)}</option>`).join('')}</select><input type="number" value="${p.qty}" onchange="S.settings.packaging[${i}].qty=+this.value;save()"><button class="x" onclick="S.settings.packaging.splice(${i},1);render()">×</button></div>`).join('')}
+  <button class="btn sm outline" onclick="S.settings.packaging.push({ing:'bopp',qty:1});render()">＋ item</button></div>
+  <h3>Dados</h3><div class="card btns"><button class="btn outline" onclick="exportJson()">Exportar JSON</button><button class="btn red" onclick="if(confirmReset())render()">Restaurar dados de exemplo</button><button class="btn red" onclick="clearAll()">Começar do zero</button></div>`;
+}
+function confirmReset(){S=seed();save();toast('Dados de exemplo restaurados');return true}
+function clearAll(){const st=seed();S={ingredients:st.ingredients.map(i=>({...i,stock:0})),recipes:st.recipes,stores:[],lots:[],positions:[],moves:[],fin:[],settings:st.settings};save();render();toast('Base zerada (receitas e ingredientes mantidos)')}
+function exportJson(){const b=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='coli-brownies-'+today()+'.json';a.click()}
+let TR;
+function shRec(id){const r=REC(id);TR=r?JSON.parse(JSON.stringify(r)):{id:uid(),name:'',validity:15,yields:{'35x35':25,'40x30':25},items:[],perUnit:[]};TR._new=!r;openSheet(r?'Ficha técnica · '+r.name:'Nova receita',recBody())}
+function recBody(){const L=(arr,k)=>arr.map((l,i)=>`<div class="line"><select onchange="TR.${k}[${i}].ing=this.value;recSum()">${S.ingredients.map(x=>`<option value="${x.id}" ${x.id===l.ing?'selected':''}>${esc(x.name)}</option>`).join('')}</select><input type="number" value="${l.qty}" oninput="TR.${k}[${i}].qty=+this.value;recSum()"><button class="x" onclick="TR.${k}.splice(${i},1);$('#sh-body').innerHTML=recBody();recSum()">×</button></div>`).join('');
+  return `<div class="fld"><label>Nome</label><input value="${esc(TR.name)}" oninput="TR.name=this.value"></div>
+  <div class="g3"><div class="fld"><label>Validade (d)</label><input type="number" value="${TR.validity}" oninput="TR.validity=+this.value"></div><div class="fld"><label>Rend. 35x35</label><input type="number" value="${TR.yields['35x35']}" oninput="TR.yields['35x35']=+this.value;recSum()"></div><div class="fld"><label>Rend. 40x30</label><input type="number" value="${TR.yields['40x30']}" oninput="TR.yields['40x30']=+this.value;recSum()"></div></div>
+  <h3>Ingredientes por forma (g / un)</h3>${L(TR.items,'items')}<button class="btn sm outline" onclick="TR.items.push({ing:'farinha',qty:0});$('#sh-body').innerHTML=recBody();recSum()">＋ ingrediente</button>
+  <h3>Por unidade (ex.: rodela de Nutella)</h3>${L(TR.perUnit,'perUnit')}<button class="btn sm outline" onclick="TR.perUnit.push({ing:'nutella',qty:0});$('#sh-body').innerHTML=recBody();recSum()">＋ por unidade</button>
+  <div id="tr-sum"></div><button class="btn block" onclick="saveRec()">Salvar receita</button>`}
+function recSum(){const a=recipeUnitCost(TR,'35x35'),b=recipeUnitCost(TR,'40x30');$('#tr-sum').innerHTML=`<div class="sumbox"><div class="between"><span>Custo/un 35x35</span><b>${money(a)}</b></div><div class="between"><span>Custo/un 40x30</span><b>${money(b)}</b></div></div>`}
+function saveRec(){if(!TR.name.trim())return toast('Informe o nome');const n=TR._new;delete TR._new;if(n)S.recipes.push(TR);else S.recipes[S.recipes.findIndex(r=>r.id===TR.id)]=TR;closeSheet();render();toast('Receita salva')}
+function shIng(id){const i=ING(id)||{name:'',unit:'g',cost:0,min:0,packLabel:'',packSize:1000,stock:0};
+  openSheet(id?'Editar item':'Novo item',`<div class="fld"><label>Nome</label><input id="in" value="${esc(i.name)}"></div>
+  <div class="g2"><div class="fld"><label>Unidade de controle</label><select id="iu"><option value="g" ${i.unit==='g'?'selected':''}>grama (g)</option><option value="un" ${i.unit==='un'?'selected':''}>unidade (un)</option></select></div><div class="fld"><label>Estoque mínimo</label><input id="im" type="number" value="${i.min}"></div></div>
+  <div class="g2"><div class="fld"><label>Embalagem de compra</label><input id="ipl" value="${esc(i.packLabel)}" placeholder="Pacote 5 kg"></div><div class="fld"><label>Qtd. na embalagem</label><input id="ips" type="number" value="${i.packSize}"></div></div>
+  <div class="fld"><label>Custo (R$/kg ou R$/un)</label><input id="ic" type="number" step="0.01" value="${(i.unit==='un'?i.cost:i.cost*1000).toFixed(2)}"></div>
+  <button class="btn block" onclick="saveIng('${id||''}')">Salvar</button>`)}
+function saveIng(id){const n=$('#in').value.trim();if(!n)return toast('Informe o nome');const u=$('#iu').value;const c=+$('#ic').value||0;
+  const o={name:n,unit:u,min:+$('#im').value||0,packLabel:$('#ipl').value,packSize:+$('#ips').value||1,cost:u==='un'?c:c/1000};
+  if(id)Object.assign(ING(id),o);else S.ingredients.push({id:uid(),stock:0,...o});closeSheet();render()}
+
+/* ════════════ SHEET ════════════ */
+function openSheet(t,html){$('#sh-title').textContent=t;$('#sh-body').innerHTML=html;$('#sheet').classList.add('open');
+  if(t==='Nova fornada')prodSum();if(t==='Lista de compras')planCalc();if(TR&&$('#tr-sum'))recSum()}
+function closeSheet(){$('#sheet').classList.remove('open');TR=null}
+
+load();render();
+</script>
+</body>
+</html>
